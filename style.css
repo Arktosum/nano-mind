@@ -1,0 +1,130 @@
+body { 
+    font-family: system-ui, -apple-system, sans-serif; 
+    background: #121212; 
+    color: #eee; 
+    margin: 2rem auto; 
+    max-width: 1200px;
+}
+.header { text-align: center; margin-bottom: 2rem; }
+.container { 
+    display: flex; 
+    flex-direction: column;
+    gap: 1.5rem; 
+}
+input { 
+    padding: 16px; 
+    font-size: 20px; 
+    background: #1a1a1a; 
+    color: #fff; 
+    border: 1px solid #444; 
+    border-radius: 6px; 
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+input:focus { outline: none; border-color: #4CAF50; }
+.panel {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 24px;
+}
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+h3 {
+    margin: 0;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+}
+.status { font-family: monospace; font-size: 14px; text-align: center;}
+.btn-small {
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+.btn-small:hover { background: #444; }
+.token-badge {
+    display: inline-block;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 4px;
+    font-family: monospace;
+    font-size: 16px;
+    color: #4CAF50;
+    cursor: pointer;
+    transition: all 0.1s;
+}
+.token-badge:hover { background: #3a3a3a; transform: translateY(-2px); }
+.token-badge.active { background: #4CAF50; color: #000; font-weight: bold; border-color: #fff; }
+.vector-math {
+    background: #0a0a0a;
+    border: 1px solid #222;
+    padding: 20px;
+    border-radius: 6px;
+    font-family: monospace;
+    color: #aaa;
+    min-height: 200px;
+}
+
+/* Big Matrix Layout */
+.matrix-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    margin: 24px 0;
+    padding: 20px;
+    background: #000;
+    border: 1px solid #222;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+.formula-block {
+    font-family: 'Times New Roman', serif;
+    font-size: 24px;
+    font-style: italic;
+    color: #ccc;
+    text-align: center;
+    margin-bottom: 16px;
+}
+.matrix-canvas {
+    background: #000;
+    border: 1px solid #333;
+    image-rendering: pixelated;
+}
+.vector-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.vector-label {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.math-symbol { font-size: 32px; color: #555; }
+
+/* Modal Styles */
+.modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+.modal-content { background-color: #1e1e1e; margin: 10% auto; padding: 24px; border: 1px solid #444; width: 80%; max-width: 800px; border-radius: 6px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 16px; margin-bottom: 20px; }
+.close { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+.close:hover { color: #fff; }
+.vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; max-height: 600px; overflow-y: auto; }
+.vocab-item { background: #2a2a2a; border: 1px solid #444; padding: 10px; text-align: center; font-family: monospace; font-size: 14px; border-radius: 4px; }
+.vocab-id { color: #888; font-size: 12px; display: block; margin-top: 4px; }
+.vocab-char { color: #4CAF50; font-weight: bold; font-size: 18px; }
