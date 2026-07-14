@@ -80,7 +80,7 @@ const LESSONS = [
     why:
       "<p>Now that we have our initial residual stream (the sum of what the character is and where it is), we are ready to start transforming it. But before we feed these vectors into the self-attention mechanism, we pass them through <b>Layer Normalization</b>.</p>" +
       "<p>Neural networks hate extreme numbers. If some dimensions grow too large, they can drown out other signals or push activation functions into saturated, flat regions where learning stops (vanishing gradients). LayerNorm fixes this by forcing the vector's values to follow a standard distribution: centered at 0, with a spread of 1.</p>" +
-      "<p>Crucially, it does this <i>per token</i>. It looks at the 64 dimensions of <b>one</b> token's vector, finds the mean and variance, and normalizes those 64 numbers. It doesn't mix information between different tokens in the sequence. Why across dimensions and not across tokens? Because sequence lengths vary, and in generation, we don't even have the future tokens yet! Normalizing across dimensions ensures a token's representation is self-contained and stable, completely independent of whatever other text happens to surround it.</p>" +
+      "<p>It does this <i>per token</i>: it looks at the 64 dimensions of one token's vector, finds their mean and variance, and normalizes those 64 numbers. It never mixes across tokens. That independence is the point — a token's normalized vector depends only on itself, not on the batch or on how many other tokens surround it, so it behaves identically during training and one-character-at-a-time generation.</p>" +
       "<p>Finally, the network applies a learned scale (<b>γ</b>) and shift (<b>β</b>) so it can mold this perfect distribution into whatever shape the attention layer actually needs.</p>",
     render: (host) => renderLayerNormLesson(host, ctx),
   },
@@ -97,7 +97,7 @@ const LESSONS = [
       "<li><b>Key (k):</b> What do I contain?</li>" +
       "<li><b>Value (v):</b> If you find me relevant, here is the information I will give you.</li>" +
       "</ul>" +
-      "<p>Because this model has 4 heads, this projection happens 4 times in parallel, allowing the network to look for 4 completely different things at the same time. <b>Crucially, this is incredibly fast on hardware.</b> By splitting a large 64-dimensional operation into four smaller 16-dimensional chunks, modern GPUs can distribute the work across thousands of cores simultaneously. This \"head split\" is why Transformers are so absurdly efficient to train!</p>",
+      "<p>This model has 4 heads, so the projection happens 4 times with 4 different sets of weights — letting the network attend to 4 different kinds of relationship at once (say, the previous letter versus the start of a word). This isn't a speed trick: four 16-dim heads cost about the same arithmetic as one 64-dim head. Multi-head is about <b>representational variety</b> — several independent attention patterns instead of one.</p>",
     render: (host) => renderQKVLesson(host, ctx),
   },
   {
@@ -118,7 +118,7 @@ const LESSONS = [
     short: "softmax 0",
     eq: `<div class="eq">A = softmax(S)</div>`,
     why:
-      "<p>We have our masked alignment scores, but they are just arbitrary numbers. To make them useful, we pass them through a <b>Softmax</b> function row by row. This turns the scores into a beautiful probability distribution.</p>" +
+      "<p>We have masked alignment scores, but they are just arbitrary numbers. Passing each row through a <b>Softmax</b> turns them into a probability distribution.</p>" +
       "<p>Softmax exponentiates every score and then divides it by the sum of the row. Because e<sup>−∞</sup> = 0, the mathematically enforced causal mask ensures that exactly 0% of the attention is spent on future tokens.</p>" +
       "<p>The remaining valid scores are squashed between 0 and 1 such that every row adds up perfectly to 1.0. You can think of this as each token having a strict 100% 'attention budget' to spend on itself and the tokens that came before it.</p>",
     render: (host) => renderSoftmaxLesson(host, ctx),
@@ -129,9 +129,9 @@ const LESSONS = [
     short: "values 0",
     eq: `<div class="eq">O<sub>0</sub> = A V</div>`,
     why:
-      "<p>We finally arrive at the grand payoff of the Self-Attention mechanism: actually gathering information from other tokens!</p>" +
-      "<p>Each token has already computed a <b>Value (v)</b> vector—this is the actual \"substance\" or information the token is offering to share. We also just computed the <b>Attention Weights (A)</b>—the strict percentage breakdown of exactly how much each token wants to listen to every other token.</p>" +
-      "<p>By multiplying the T×T attention matrix by the T×16 value matrix, every token computes a perfectly <b>weighted sum</b> of the Values from the past. A token that received 80% attention will contribute 80% of its Value vector to the final Output. The resulting T×16 Output matrix represents a new, context-enriched understanding for each token.</p>",
+      "<p>This is where information finally moves between tokens.</p>" +
+      "<p>Each token already computed a <b>Value (v)</b> vector — the content it offers to share — and the <b>Attention Weights (A)</b> — how much each token listens to every other token.</p>" +
+      "<p>Multiplying the T×T attention matrix by the T×16 value matrix gives every token a <b>weighted sum</b> of the Values it attended to. A token that put 80% of its weight on one neighbour takes 80% of that neighbour's Value. The resulting T×16 output is each token's context-enriched view.</p>",
     render: (host) => renderValuesLesson(host, ctx),
   },
   {
@@ -140,9 +140,8 @@ const LESSONS = [
     short: "concat 0",
     eq: `<div class="eq">O = [ O<sub>0</sub> || O<sub>1</sub> || O<sub>2</sub> || O<sub>3</sub> ]</div>`,
     why:
-      "<p>Up until now, we've only been visualizing <b>Head 0</b>. But while we were doing that, <b>Heads 1, 2, and 3</b> were simultaneously running the exact same math in parallel on the GPU!</p>" +
-      "<p>This reveals the true brilliance of Multi-Head Attention. Not only do the different heads learn to look for different linguistic patterns (like nouns vs. punctuation), but because they don't depend on each other, their math can be perfectly parallelized. The GPU crunches all 4 heads independently at lightning speed.</p>" +
-      "<p>To combine all these diverse insights, the Transformer simply glues the four 16-dimensional vectors together side-by-side. 4 heads × 16 dimensions perfectly reconstructs our original 64-dimensional vector size. The token is whole again, now deeply enriched by the context of its neighbors.</p>",
+      "<p>So far we've only visualized <b>Head 0</b>. Heads 1, 2, and 3 ran the same math independently, each with its own weights, so each learned to look for something different (say, punctuation versus word boundaries).</p>" +
+      "<p>To recombine them, the Transformer glues the four 16-dimensional outputs together side by side: 4 × 16 rebuilds the original 64-dimensional width. The token is whole again, now carrying what all four heads found.</p>",
     render: (host) => renderConcatLesson(host, ctx),
   },
   {
@@ -182,7 +181,7 @@ const LESSONS = [
     crumb: "block 0 / feed forward — step 13 of the forward pass",
     title: "Feed Forward Network",
     short: "ffwd 0",
-    eq: `<div class="eq">FFN(h) = ReLU(h · W<sub>up</sub><sup>T</sup>) · W<sub>down</sub><sup>T</sup></div>`,
+    eq: `<div class="eq">FFN(h) = ReLU(h · W<sub>up</sub><sup>T</sup> + b<sub>up</sub>) · W<sub>down</sub><sup>T</sup> + b<sub>down</sub></div>`,
     why:
       "<p>While Self-Attention lets tokens communicate with each other, the <b>Feed Forward Network (FFN)</b> gives each token a chance to \"think\" about what it just learned. The FFN processes each token completely independently of the others.</p>" +
       "<p>First, the 64-dimensional vector is projected up into a wider 256-dimensional space (W<sub>up</sub>), allowing the model to represent more complex combinations of features. We apply a <b>ReLU</b> non-linearity to introduce mathematical complexity (thresholding negative values to 0), and then project it back down to 64 dimensions (W<sub>down</sub>).</p>",
@@ -208,6 +207,27 @@ const LESSONS = [
       "<p>But the model actually has <b>3 identical Transformer Blocks</b>! The Residual Stream continues to flow upwards, branching off to be processed and added back in via Skip Connections, until it finally reaches the Output Stage to predict the next token.</p>" +
       "<p>This diagram recaps the components we just built in Block 0, and shows how they fit into the entire network.</p>",
     render: (host) => renderRecapLesson(host, ctx),
+  },
+  {
+    crumb: "output / next-token prediction — the final step",
+    title: "Predicting the next character",
+    short: "output",
+    eq: `<div class="eq">p = softmax( LayerNorm<sub>f</sub>(h³) · W<sub>lm</sub><sup>T</sup> + b<sub>lm</sub> )</div>`,
+    why:
+      "<p>After three blocks, the residual stream has gathered everything the network can infer. Now it becomes an actual prediction.</p>" +
+      "<p>Only the <b>last</b> token's row is needed: it is normalized one final time, then a learned <b>64→75</b> language head scores every possible next character. Softmax turns those 75 scores into a probability distribution, and greedy decoding takes the most likely character.</p>" +
+      "<p>Append that character to the input and run the whole pass again — one character at a time — and the model writes.</p>",
+    render: (host) => renderOutputLesson(host, ctx),
+  },
+  {
+    crumb: "generate / autoregression — putting it in a loop",
+    title: "Generating text",
+    short: "generate",
+    eq: `<div class="eq">x<sub>t+1</sub> = argmax softmax( model(x<sub>1…t</sub>) ) ,&nbsp;&nbsp; then feed x<sub>1…t+1</sub> back in</div>`,
+    why:
+      "<p>A transformer only ever predicts <i>one</i> next character. To make it write, we run it in a loop: predict, append the character to the input, and run the whole forward pass again on the longer sequence.</p>" +
+      "<p>Everything you just walked through happens on every single step. Below, drive the loop yourself and watch the model compose text — conditioned, each step, on the characters it already wrote.</p>",
+    render: (host) => renderGenerateLesson(host, ctx),
   },
 ];
 
@@ -262,7 +282,9 @@ window.addEventListener("keydown", (e) => {
 function buildCtx(text) {
   let tokens = encode(text);
   if (tokens.length > 64) tokens = tokens.slice(-64);
-  ctx = { tokens, chars: tokens.map(decode), weights };
+  // one correct forward pass, shared by every lesson (see forward.js)
+  const fwd = tokens.length ? computeForward(weights, tokens) : null;
+  ctx = { tokens, chars: tokens.map(decode), weights, fwd };
 }
 
 function jump(next) {

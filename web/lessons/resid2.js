@@ -1,41 +1,43 @@
-/* resid2.js — Second Residual Add step */
+/* resid2.js — the second residual add (block 0), on real vectors.
+   h'' = h' + f, completing block 0. Reads ctx.fwd. */
+
 function renderResid2Lesson(host, ctx) {
-  function svg() {
-    const w = 500;
-    const h = 250;
-    
-    let s = `
-      <defs>
-        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="#888" />
-        </marker>
-      </defs>
-      
-      <!-- Residual Stream -->
-      <rect x="50" y="50" width="100" height="40" rx="4" fill="#222" stroke="#4dabf7" stroke-width="2" />
-      <text x="100" y="75" fill="#fff" text-anchor="middle" font-size="14">Stream (h')</text>
-      
-      <path d="M 150 70 L 230 70" fill="none" stroke="#888" stroke-width="2" marker-end="url(#arrow)" />
-      
-      <!-- FFN Output -->
-      <rect x="50" y="150" width="100" height="40" rx="4" fill="#1a365d" stroke="#4dabf7" stroke-width="2" />
-      <text x="100" y="175" fill="#fff" text-anchor="middle" font-size="14">FFN Output</text>
-      
-      <path d="M 150 170 L 250 170 L 250 100" fill="none" stroke="#888" stroke-width="2" marker-end="url(#arrow)" />
-      
-      <!-- Add -->
-      <circle cx="250" cy="70" r="20" fill="#2c2c2c" stroke="#e67700" stroke-width="2" />
-      <text x="250" y="78" fill="#e67700" text-anchor="middle" font-size="24" font-weight="bold">+</text>
-      
-      <path d="M 270 70 L 350 70" fill="none" stroke="#888" stroke-width="2" marker-end="url(#arrow)" />
-      
-      <!-- Output Stream -->
-      <rect x="350" y="50" width="120" height="40" rx="4" fill="#222" stroke="#4dabf7" stroke-width="2" />
-      <text x="410" y="75" fill="#fff" text-anchor="middle" font-size="14">New Stream (h'')</text>
-    `;
-    
-    return `<div class="lz-diagram"><div class="lz-svgwrap" style="background:#111; padding:20px; border-radius:8px; border:1px solid #333;"><svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}">${s}</svg></div></div>`;
+  const b0 = ctx.fwd.blocks[0];
+  const T = ctx.fwd.T;
+  let active = T - 1;
+
+  host.addEventListener("mousemove", (e) => {
+    const t = e.target;
+    if (t.dataset && t.dataset.tip) showTip(t.dataset.tip, e.clientX, e.clientY);
+    else hideTip();
+  });
+  host.addEventListener("mouseleave", hideTip);
+
+  function draw() {
+    hideTip();
+    const hp = b0.h1[active];      // stream after attention
+    const f = b0.ffDown[active];   // FFN delta
+    const hpp = b0.hOut[active];   // block-0 output
+    const sMax = Math.max(maxAbs([hp]), maxAbs([f]), maxAbs([hpp]));
+
+    host.innerHTML =
+      chipRow(ctx.tokens, ctx.chars, active, "your sequence — click a position") +
+      section("1", "add the FFN's contribution back") +
+      note("Exactly like the first residual add: the FFN output is a correction, added onto the stream rather than replacing it. The skip connection keeps information and gradients flowing straight through.") +
+      sumDiagram([
+        { vec: hp, label: "h′ₜ", sub: "after attention", max: sMax,
+          tip: (c) => `dim ${c}: ${hp[c].toFixed(3)} + ${f[c].toFixed(3)} = ${hpp[c].toFixed(3)}`, op: "+" },
+        { vec: f, label: "fₜ", sub: "FFN output", max: sMax,
+          tip: (c) => `dim ${c}: ${hp[c].toFixed(3)} + ${f[c].toFixed(3)} = ${hpp[c].toFixed(3)}`, op: "=" },
+        { vec: hpp, label: "h″ₜ", sub: "block 0 output", max: sMax, out: true,
+          tip: (c) => `dim ${c}: ${hp[c].toFixed(3)} + ${f[c].toFixed(3)} = ${hpp[c].toFixed(3)}` },
+      ], "h″ₜ = h′ₜ + fₜ") +
+      note("That completes <b>Transformer Block 0</b>. This h″ becomes the input to Block 1, which repeats the identical structure with its own weights.");
+
+    host.querySelectorAll(".lz-chip").forEach((c) =>
+      c.addEventListener("click", () => { active = +c.dataset.i; draw(); })
+    );
   }
-  
-  host.innerHTML = svg();
+
+  draw();
 }

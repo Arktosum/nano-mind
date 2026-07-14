@@ -52,19 +52,22 @@ web/
 ├── style.css             the "engineering instrument plate" visual system
 ├── app.js                controller + the lesson registry (chapters)
 ├── vocab.js              the 75-char vocabulary + tokenizer (encode/decode/glyph)
+├── forward.js            one correct forward pass, computed once → ctx.fwd
 ├── weights.json          the trained weights (exported from train/)
 ├── render/
-│   └── tensors.js        shared draw helpers: colour maps, heatmaps, bars, hover tooltip
-├── lessons/
-│   ├── embedding.js      lesson 1 — token embedding lookup (one-hot selection)
-│   └── position.js       lesson 2 — positional embedding + the sum → residual stream
-└── player/               PARKED — the full 117-op micro-step player (not currently wired)
-    ├── math.js           pure-JS linear algebra (linear, layerNorm, softmax, …)
-    ├── engine.js         the JS forward pass / inference engine
-    ├── trace.js          records every op of the forward pass as a step ladder
-    ├── flow.js           generic operation-diagram SVG renderer
-    └── minimap.js        architecture map / jump navigation
+│   ├── tensors.js        colour maps, heatmaps, bars, hover tooltip
+│   ├── lesson-kit.js     shared SVG helpers + palette used by lessons
+│   └── minimap.js        contextual architecture map (network / heads / one head)
+├── lessons/              one operation per file (see ROADMAP.md for the full list)
+│   ├── embedding.js  position.js  layernorm.js  qkv.js  scores.js  softmax.js
+│   ├── values.js  concat.js  proj.js  resid1.js  ln2.js  ffwd.js  resid2.js
+│   └── recap.js  output.js
+└── player/               PARKED — the full ~117-op micro-step player (not wired)
+    ├── math.js  engine.js  trace.js  flow.js  minimap.js
 ```
+
+Lessons read their real numbers from `ctx.fwd` (built by `forward.js`, validated bit-for-bit
+against `player/engine.js`) and draw with the shared helpers in `render/lesson-kit.js`.
 
 ### The two "modes"
 
