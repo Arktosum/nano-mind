@@ -3,66 +3,124 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nano-Mind Visualizer</title>
+    <title>nano·mind — decoder-only transformer, traced</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
-    <div class="header">
-      <h1>Nano-Mind: Embedding Math</h1>
-      <p>
-        Type a word, then click a token to visualize the exact matrix
-        multiplication that generates its vector.
-      </p>
-    </div>
+  <body data-mode="landing">
+    <!-- ───────────────────────── LANDING PLATE ───────────────────────── -->
+    <main class="plate" id="landing">
+      <span class="crop tl"></span><span class="crop tr"></span>
+      <span class="crop bl"></span><span class="crop br"></span>
 
-    <div class="container">
-      <input
-        type="text"
-        id="promptInput"
-        placeholder="Type something..."
-        autocomplete="off"
-        disabled
-      />
-      <div id="statusBox" class="panel status">Loading weights.json...</div>
+      <header class="plate-head">
+        <span class="plate-mark">nano<span class="dot">·</span>mind</span>
+        <span class="plate-spec">char-level · d=64 · heads=4 · layers=3 · ctx=64</span>
+      </header>
 
-      <div id="pipelineBox" class="panel" style="display: none">
-        <div class="section-header">
-          <h3>Tokenization Sequence</h3>
-          <button id="viewVocabBtn" class="btn-small">
-            View Full Vocabulary Table
-          </button>
-        </div>
-        <div id="tokensContainer" style="margin-bottom: 24px"></div>
+      <div class="plate-body">
+        <p class="fig-no">fig. 0 — the forward pass</p>
+        <h1 class="lede">
+          Type a fragment. Watch the network turn it into the next
+          character&nbsp;— every matmul, mask, and softmax, down to the numbers.
+        </h1>
 
-        <h3
-          style="
-            border-top: 1px solid #333;
-            padding-top: 24px;
-            margin-top: 24px;
-          "
-        >
-          The Embedding Matrix (W_token)
-        </h3>
-        <div id="embeddingContainer" class="vector-math">
-          <span class="muted"
-            >Select a token above to run the linear algebra.</span
-          >
+        <!-- schematic of the pipeline -->
+        <div class="schematic" aria-hidden="true">
+          <span class="s-node">embed</span>
+          <span class="s-wire"></span>
+          <span class="s-node">block 0</span>
+          <span class="s-wire"></span>
+          <span class="s-node">block 1</span>
+          <span class="s-wire"></span>
+          <span class="s-node">block 2</span>
+          <span class="s-wire"></span>
+          <span class="s-node">ln<sub>f</sub></span>
+          <span class="s-wire"></span>
+          <span class="s-node live">logits</span>
         </div>
       </div>
-    </div>
 
-    <div id="vocabModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Token Encoding Table</h3>
-          <span class="close" id="closeModal">&times;</span>
+      <form class="input-bay" id="promptForm" autocomplete="off">
+        <label class="bay-label" for="promptInput">input</label>
+        <input
+          type="text"
+          id="promptInput"
+          class="bay-field"
+          placeholder="Alice was beginning to"
+          spellcheck="false"
+          disabled
+        />
+        <button type="submit" id="runBtn" class="bay-run" disabled>trace ▸</button>
+      </form>
+
+      <footer class="plate-foot">
+        <span class="boot-status" id="bootStatus">loading weights…</span>
+        <span class="foot-note">trained on alice.txt · 147,988 chars · runs entirely in your browser</span>
+      </footer>
+    </main>
+
+    <!-- ───────────────────────── WORKBENCH ───────────────────────── -->
+    <div class="workbench" id="workbench" hidden>
+      <header class="wb-bar">
+        <span class="wb-mark">nano<span class="dot">·</span>mind</span>
+        <div class="wb-prompt">
+          <label class="bay-label" for="wbPrompt">input</label>
+          <input type="text" id="wbPrompt" class="wb-prompt-field" spellcheck="false" />
+          <button id="wbRun" class="wb-run">re-trace</button>
         </div>
-        <div id="vocabGrid" class="vocab-grid"></div>
+        <div class="lesson-nav" id="lessonNav">
+          <button id="lessonPrev" title="Previous lesson (←)">◂</button>
+          <span class="lesson-count">lesson <b id="lessonLabel">1 / 1</b></span>
+          <button id="lessonNext" title="Next lesson (→)">▸</button>
+        </div>
+        <div class="wb-transport">
+          <button id="prevBtn" title="Previous op (←)">◂</button>
+          <span class="step-counter">op <b id="stepNow">0</b>/<span id="stepTotal">0</span></span>
+          <button id="nextBtn" title="Next op (→)">▸</button>
+          <button id="playBtn" title="Play (space)">▶</button>
+          <button id="resetBtn" title="Back to start">⟲</button>
+        </div>
+      </header>
+
+      <div class="wb-body">
+        <nav class="minimap" id="minimap" aria-label="Architecture map">
+          <div class="minimap-hint">map</div>
+        </nav>
+
+        <section class="stage">
+          <div class="stage-head">
+            <span class="stage-crumb" id="stageCrumb">embed / tokenize</span>
+            <h2 class="stage-title" id="stageTitle">waiting to trace</h2>
+          </div>
+
+          <div class="equation-card" id="equationCard"></div>
+
+          <div class="instrument" id="instrument">
+            <div class="instrument-empty">numbers for this step render here</div>
+          </div>
+
+          <div class="why-card" id="whyCard">
+            <span class="why-label">why</span>
+            <p id="whyText">Press <b>trace</b> to run the forward pass.</p>
+          </div>
+
+          <nav class="lesson-foot" id="lessonFoot"></nav>
+        </section>
       </div>
+
+      <footer class="spine" id="spine">
+        <span class="spine-label">residual stream</span>
+        <div class="spine-strip" id="spineStrip"></div>
+        <div class="generation" id="generation"><span class="gen-label">output</span></div>
+      </footer>
     </div>
 
-    <script src="math.js"></script>
-    <script src="engine.js"></script>
+    <!-- focused lesson mode: only what the token-embedding lesson needs.
+         (math/engine/trace/flow/minimap are parked until we re-enable stepping) -->
+    <script src="vocab.js"></script>
+    <script src="tensors.js"></script>
+    <script src="lesson-embedding.js"></script>
+    <script src="lesson-position.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

@@ -3,8 +3,7 @@
  * Translates characters to tokens and executes the Transformer math.
  */
 
-// Exact vocabulary extracted from the Python training script (75 characters)
-const VOCAB = "\n !()*,-.03:;?ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyzù—‘’“”";
+// VOCAB / encode / decode now live in vocab.js (loaded first).
 const BLOCK_SIZE = 64;
 const N_LAYER = 3;
 const N_HEAD = 4;
