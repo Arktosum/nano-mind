@@ -115,12 +115,12 @@
       </footer>
     </div>
 
-    <!-- focused lesson mode: only what the token-embedding lesson needs.
-         (math/engine/trace/flow/minimap are parked until we re-enable stepping) -->
+    <!-- focused lesson mode. The full micro-step player (web/player/*) is
+         parked until we re-enable stepping — see ROADMAP.md. -->
     <script src="vocab.js"></script>
-    <script src="tensors.js"></script>
-    <script src="lesson-embedding.js"></script>
-    <script src="lesson-position.js"></script>
+    <script src="render/tensors.js"></script>
+    <script src="lessons/embedding.js"></script>
+    <script src="lessons/position.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

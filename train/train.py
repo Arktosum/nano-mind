@@ -80,7 +80,8 @@ for key, tensor in state_dict.items():
     # We use .cpu().numpy().tolist() to safely extract the raw numbers
     export_dict[key] = tensor.cpu().numpy().tolist()
 
-with open('weights.json', 'w') as f:
+# Export straight into the web app, which fetches web/weights.json at runtime.
+with open('../web/weights.json', 'w') as f:
     json.dump(export_dict, f)
 
-print("Successfully exported to weights.json!")
+print("Successfully exported to ../web/weights.json!")

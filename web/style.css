@@ -762,6 +762,31 @@ body[data-view="lesson"] .instrument {
 }
 .lz-note.key b { color: var(--accent); }
 
+/* the three "how it learns" steps */
+.lz-how { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 14px; max-width: 84ch; }
+.lz-how-item {
+  position: relative;
+  padding: 12px 14px 12px 46px;
+  border: 1px solid #2c2c22;
+  background: #14140f;
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--panel-ink);
+}
+.lz-how-item b { color: var(--accent); }
+.lz-how-item i { color: var(--panel-ink); font-style: italic; }
+.lz-how-item .n {
+  position: absolute;
+  left: 12px; top: 12px;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
 /* lesson navigation (top bar) */
 .lesson-nav { display: flex; align-items: stretch; border-left: 1.5px solid var(--rule); }
 .lesson-nav button {

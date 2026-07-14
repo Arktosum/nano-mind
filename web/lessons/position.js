@@ -44,10 +44,11 @@ function renderPositionSumLesson(host, ctx) {
       contrastTable() +
       reuseView() +
       sinuView() +
-      learnedMeaning() +
-      section("3", "the sum — fuse “what” with “where”") +
+      section("3", "how it learns to encode position") +
+      howLearned() +
+      section("4", "the sum — fuse “what” with “where”") +
       sumView(active) +
-      section("4", "the payoff — order is now encoded") +
+      section("5", "the payoff — order is now encoded") +
       orderView();
     host.querySelectorAll(".lz-chip").forEach((c) =>
       c.addEventListener("click", () => { active = +c.dataset.i; draw(); })
@@ -252,25 +253,86 @@ function renderPositionSumLesson(host, ctx) {
     );
   }
 
-  /* ── 2d. what "learned" actually means (the calc is identical) ── */
-  function learnedMeaning() {
+  /* ── 3. HOW gradient descent encodes position ─────────────── */
+  function howLearned() {
     return (
       '<div class="lz-note key">' +
-      "<b>So what is “learned” even doing?</b> Nothing <i>at this step</i> — you spotted it exactly. The runtime " +
-      "calculation is the same lookup whether the table is sinusoidal or learned, and whether it's token or " +
-      "position. “Learned” isn't a different computation; it's a statement about <b>where the numbers in the table " +
-      "came from</b>." +
-      "<br><br>" +
-      "Sinusoidal rows are <i>computed from the formula above</i> and frozen before training. This model's rows " +
-      "instead <b>start random</b>, and during <b>training</b> gradient descent nudges every one of the " +
-      "64×64 = 4,096 values to lower the prediction error — until they become a positional code the model " +
-      "invented for itself (the noisy panel above is that frozen result)." +
-      "<br><br>" +
-      "The catch: <b>nano-mind only shows the forward pass</b> — inference. The single thing that ever made " +
-      "“learned” differ from “sinusoidal,” namely training, happened offline and isn't on this screen. That's why " +
-      "the calculation looks identical: you're looking at the baked-in table, long after the learning finished." +
-      "</div>"
+      "The lookup is the same as always — so <b>where does the positional code come from?</b> Not from this step. " +
+      "It's forged during <b>training</b> (which nano-mind doesn't show), by three things working together:" +
+      "</div>" +
+      '<div class="lz-how">' +
+      '<div class="lz-how-item"><span class="n">1</span><b>The objective.</b> The model is trained to predict the ' +
+      "next character. Guess wrong → the <i>loss</i> is high.</div>" +
+      '<div class="lz-how-item"><span class="n">2</span><b>The pressure.</b> Natural text is ordered: the next ' +
+      "character depends on <i>where</i> you are, and reordering the same characters changes their meaning. A model " +
+      "that ignores position predicts worse — so any tweak to W_P that lets it use order <b>lowers the loss</b>, and " +
+      "gradient descent rolls that way.</div>" +
+      '<div class="lz-how-item"><span class="n">3</span><b>The mechanism — parameter sharing.</b> The crux. The one ' +
+      "row <b>W_P[t]</b> is reused for the t-th token of <i>every</i> training sequence, so it collects a gradient " +
+      "from millions of different position-t tokens. Whatever is <b>consistently true about being t-th</b> " +
+      "accumulates in that row; the per-example content pulls in random directions and <b>averages out</b>. The row " +
+      "converges to the distilled signal of “being position t.”</div>" +
+      "</div>" +
+      loopView() +
+      note(
+        "And you can see a fingerprint of it in the real weights. Below is the <b>length</b> (‖·‖) of each learned " +
+        "position row. <b>Position 0 towers over the rest</b> — training discovered that the first character of a " +
+        "sequence is statistically special (it opens the text) and handed position 0 a loud, distinctive vector. " +
+        "Nobody programmed that; the data pushed it there."
+      ) +
+      normBars()
     );
+  }
+
+  function loopView() {
+    const bh = 40, padT = 22;
+    const specs = [
+      ["W_P[t]", "wp", 92],
+      ["h⁰ = Eᵗᵒᵏ + Eᵖᵒˢ", "", 150],
+      ["attn → ffn → logits", "", 156],
+      ["loss vs true char", "", 132],
+    ];
+    const gap = 34;
+    let xs = [], x = 10;
+    specs.forEach((sp) => { xs.push(x); x += sp[2] + gap; });
+    const totalW = x - gap + 10;
+    const y = padT;
+    let s = "";
+    // forward arrows
+    for (let i = 0; i < specs.length - 1; i++)
+      s += line(xs[i] + specs[i][2], y + bh / 2, xs[i + 1], y + bh / 2);
+    specs.forEach((sp, i) => { s += box(xs[i], y, sp[2], bh, sp[0], sp[1]); });
+    s += txt(xs[0] + specs[0][2] / 2, y + bh + 14, "the thing being learned", "lz-reuse-lab distinct");
+    // backprop return arrow (loss → W_P)
+    const yb = y + bh + 40;
+    const lossCx = xs[3] + specs[3][2] / 2, wpCx = xs[0] + specs[0][2] / 2;
+    s += `<line x1="${lossCx}" y1="${y + bh}" x2="${lossCx}" y2="${yb}" class="lz-arrow"/>`;
+    s += `<line x1="${lossCx}" y1="${yb}" x2="${wpCx}" y2="${yb}" class="lz-arrow"/>`;
+    s += `<line x1="${wpCx}" y1="${yb}" x2="${wpCx}" y2="${y + bh + 6}" class="lz-arrow"/>`;
+    s += `<path d="M ${wpCx - 4} ${y + bh + 6} L ${wpCx} ${y + bh} L ${wpCx + 4} ${y + bh + 6} Z" class="lz-arrowhead"/>`;
+    s += txt((lossCx + wpCx) / 2, yb - 6, "backprop — ∂loss/∂W_P nudges every position row", "lz-arrowlabel");
+    return svg(totalW, yb + 20, s, "one training step · offline · not shown in the forward pass");
+  }
+
+  function normBars() {
+    const N = Math.min(BLOCK, 32);
+    const norms = [];
+    for (let i = 0; i < N; i++) { let ss = 0; for (const v of Wp[i]) ss += v * v; norms.push(Math.sqrt(ss)); }
+    const mx = Math.max(...norms);
+    const bw = 16, g = 5, padL = 42, padT = 12, chartH = 120;
+    const w = padL + N * (bw + g) + 12, h = padT + chartH + 32;
+    let s = "";
+    s += txt(padL - 8, padT + 6, mx.toFixed(0), "lz-tick", "end");
+    s += txt(padL - 8, padT + chartH, "0", "lz-tick", "end");
+    s += `<line x1="${padL}" y1="${padT + chartH}" x2="${padL + N * (bw + g)}" y2="${padT + chartH}" class="lz-arrow"/>`;
+    for (let i = 0; i < N; i++) {
+      const bh = chartH * (norms[i] / mx);
+      const x = padL + i * (bw + g), yy = padT + chartH - bh;
+      s += `<rect x="${x}" y="${yy}" width="${bw}" height="${bh}" fill="${i === 0 ? "#d6401f" : "#4a4a3e"}" data-tip="pos ${i} · ‖W_P‖ = ${norms[i].toFixed(2)}"/>`;
+      if (i === 0 || i % 4 === 0) s += txt(x + bw / 2, padT + chartH + 13, String(i), "lz-tick");
+    }
+    s += txt(padL + (N * (bw + g)) / 2, padT + chartH + 28, "position →", "lz-tick");
+    return svg(w, h, s, "‖ W_P[t] ‖ by position — a visible fingerprint of training");
   }
 
   /* ── 2. the sum: three rows adding ─────────────────────────── */
