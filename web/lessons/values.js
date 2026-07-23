@@ -1,7 +1,7 @@
 /* lesson-values.js — the eighth operation: Multiply Values (Attention Output).
    Attention weights, values, and the head output come from ctx.fwd. */
 
-function renderValuesLesson(host, ctx) {
+export function renderValuesLesson(host, ctx) {
   const { tokens, chars } = ctx;
   const T = ctx.fwd.T;
   const HEAD_SIZE = 16;

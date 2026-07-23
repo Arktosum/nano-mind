@@ -2,7 +2,7 @@
    Each token is processed independently: 64 → 256, ReLU (which kills
    roughly half the hidden units), 256 → 64. Reads ctx.fwd. */
 
-function renderFfwdLesson(host, ctx) {
+export function renderFfwdLesson(host, ctx) {
   const b0 = ctx.fwd.blocks[0];
   const T = ctx.fwd.T;
   let active = T - 1;

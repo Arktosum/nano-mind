@@ -1,5 +1,5 @@
 /* ring_attention.js — Context Parallelism for 1M context */
-function renderRingAttentionLesson(host, ctx) {
+export function renderRingAttentionLesson(host, ctx) {
   function render() {
     const w = 700;
     const h = 400;
@@ -52,6 +52,17 @@ function renderRingAttentionLesson(host, ctx) {
             
             <text x="320" y="215" fill="#e67700" font-weight="bold" text-anchor="middle" font-size="18" id="ringStatus">Computing Local Attention...</text>
           </svg>
+        </div>
+        
+        <div class="lz-notes" >
+          <h3 style="color: #fff; margin-top: 0;">Overlapping Communication and Computation</h3>
+          <p>The real magic of Ring Attention is how it <strong>hides network latency</strong>. In a naive setup, GPUs calculate attention and then sit idle while waiting for the next Key/Value blocks to travel over the network. This delay becomes a massive bottleneck as you add more GPUs.</p>
+          <p>Because modern GPUs have network controllers that operate independently from their math compute cores, Ring Attention can do both at once:</p>
+          <ul style="margin-top: 8px; margin-bottom: 12px; padding-left: 20px;">
+            <li><strong style="color: #4dabf7;">Computation:</strong> A GPU computes the attention scores for its current block of tokens.</li>
+            <li><strong style="color: #e67700;">Communication:</strong> <em>At the exact same time</em>, it transmits its current KV block to the next GPU and receives the incoming KV block from the previous GPU.</li>
+          </ul>
+          <p style="margin-bottom: 0;">Since the network transfer happens in the background, the new data arrives <em>before</em> the GPU finishes its current math. From the compute cores' perspective, the wait time is practically zero! This eliminates network congestion and allows the model to <strong>scale near-infinitely</strong> to support massive context windows.</p>
         </div>
       </div>
     `;

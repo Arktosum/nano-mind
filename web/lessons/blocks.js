@@ -4,7 +4,7 @@
    deepening block by block, and how its attention shifts with depth.
    Reads ctx.fwd (all 3 blocks already computed). */
 
-function renderBlocksLesson(host, ctx) {
+export function renderBlocksLesson(host, ctx) {
   const F = ctx.fwd;
   const T = F.T;
   const streams = [F.h0, F.blocks[0].hOut, F.blocks[1].hOut, F.blocks[2].hOut];

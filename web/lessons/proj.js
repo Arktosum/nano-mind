@@ -1,6 +1,6 @@
 /* lesson-proj.js — the tenth operation: Output Projection. */
 
-function renderProjLesson(host, ctx) {
+export function renderProjLesson(host, ctx) {
   const { tokens, chars, weights } = ctx;
   const COLS = 64;
   const T = ctx.fwd.T;

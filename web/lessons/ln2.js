@@ -1,6 +1,6 @@
 /* lesson-ln2.js — the twelfth operation: LayerNorm 2. */
 
-function renderLn2Lesson(host, ctx) {
+export function renderLn2Lesson(host, ctx) {
   const { tokens, chars, weights } = ctx;
   const COLS = 64;
   const T = ctx.fwd.T;

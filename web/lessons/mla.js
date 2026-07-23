@@ -1,5 +1,5 @@
 /* mla.js — Multi-Head Latent Attention (DeepSeek) */
-function renderMlaLesson(host, ctx) {
+export function renderMlaLesson(host, ctx) {
   function render() {
     const w = 700;
     const h = 450;

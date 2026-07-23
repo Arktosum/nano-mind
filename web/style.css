@@ -724,6 +724,48 @@ body[data-view="lesson"] .instrument {
 .lz-tick { fill: var(--panel-faint); font: 9px var(--mono); dominant-baseline: middle; }
 .lz-tick.on { fill: var(--accent); font-weight: 700; }
 
+/* SVG Standard Components */
+.svg-q { fill: #e67700; stroke: #f08c00; stroke-width: 2; }
+.svg-q-text { fill: #fff; font: bold 14px var(--mono); text-anchor: middle; dominant-baseline: middle; }
+.svg-k { fill: #1864ab; stroke: #339af0; stroke-width: 2; }
+.svg-k-text { fill: #fff; font: bold 14px var(--mono); text-anchor: middle; dominant-baseline: middle; }
+.svg-v { fill: #2b8a3e; stroke: #40c057; stroke-width: 2; }
+.svg-v-text { fill: #fff; font: bold 14px var(--mono); text-anchor: middle; dominant-baseline: middle; }
+.svg-box { fill: #1a1a1a; stroke: #444; stroke-width: 2; }
+.svg-box-text { fill: #ccc; font: 14px var(--mono); text-anchor: middle; dominant-baseline: middle; }
+.svg-arrow { fill: none; stroke: #4dabf7; stroke-width: 2; }
+.svg-arrow-q { fill: none; stroke: #f08c00; stroke-width: 2; }
+.svg-arrow-v { fill: none; stroke: #40c057; stroke-width: 2; }
+
+/* Standardized Notes Block */
+.lz-notes {
+  margin-top: 20px;
+  padding: 15px;
+  background: #1a1a1a;
+  border-left: 4px solid #4dabf7;
+  border-radius: 4px;
+  color: #ddd;
+  font-family: sans-serif;
+  line-height: 1.6;
+}
+.lz-notes h3 {
+  color: #fff;
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+.lz-notes .note-meta {
+  margin-top: 0;
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 15px;
+}
+.lz-notes .note-meta i { font-style: italic; }
+.lz-notes-prob { color: #ff6b6b; font-weight: bold; margin-bottom: 5px; }
+.lz-notes-moti { color: #4dabf7; font-weight: bold; margin-bottom: 5px; }
+.lz-notes-impl { color: #40c057; font-weight: bold; margin-bottom: 5px; }
+.lz-notes p { margin-top: 0; margin-bottom: 15px; }
+.lz-notes p:last-child { margin-bottom: 0; }
+
 /* minimap contextual panels — sticky right rail */
 .mm-rail {
   border-left: 1px solid var(--rule-2);

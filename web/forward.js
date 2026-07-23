@@ -35,6 +35,9 @@
   const add = (a, b) => a.map((r, i) => r.map((v, j) => v + b[i][j]));
 
   function computeForward(W, tokens) {
+    const profile = { embed: 0, blocks: [], output: 0 };
+    let t0 = performance.now();
+
     const T = tokens.length;
     const Wtok = W["token_embedding_table.weight"];
     const Wpos = W["position_embedding_table.weight"];
@@ -43,24 +46,33 @@
     const tokEmb = tokens.map((id) => Wtok[id].slice());
     const posEmb = tokens.map((_, i) => Wpos[i].slice());
     const h0 = add(tokEmb, posEmb);
+    
+    profile.embed += performance.now() - t0;
 
     let x = h0.map((r) => r.slice());
     const blocks = [];
 
     for (let l = 0; l < N_LAYER; l++) {
+      const bProf = { ln1: 0, qkv: 0, attn: 0, proj: 0, resid1: 0, ln2: 0, ffwd: 0, resid2: 0 };
       const bp = `blocks.${l}`;
+      
+      t0 = performance.now();
       const ln1 = x.map((row) => layernorm(row, W[`${bp}.ln1.weight`], W[`${bp}.ln1.bias`]).out);
+      bProf.ln1 += performance.now() - t0;
 
       const heads = [];
       const concat = x.map(() => new Array(C).fill(0));
       for (let h = 0; h < N_HEAD; h++) {
+        t0 = performance.now();
         const Wq = W[`${bp}.sa.heads.${h}.query.weight`];
         const Wk = W[`${bp}.sa.heads.${h}.key.weight`];
         const Wv = W[`${bp}.sa.heads.${h}.value.weight`];
         const Q = ln1.map((r) => lin(r, Wq, null));
         const K = ln1.map((r) => lin(r, Wk, null));
         const V = ln1.map((r) => lin(r, Wv, null));
+        bProf.qkv += performance.now() - t0;
 
+        t0 = performance.now();
         const scoresRaw = [], scoresScaled = [], scoresMasked = [], attn = [], out = [];
         for (let i = 0; i < T; i++) {
           const raw = [], scaled = [], masked = [];
@@ -84,28 +96,46 @@
           out.push(o);
         }
         heads.push({ Q, K, V, scoresRaw, scoresScaled, scoresMasked, attn, out });
+        bProf.attn += performance.now() - t0;
       }
 
+      t0 = performance.now();
       const attnProj = concat.map((r) => lin(r, W[`${bp}.sa.proj.weight`], W[`${bp}.sa.proj.bias`]));
+      bProf.proj += performance.now() - t0;
+      
+      t0 = performance.now();
       const h1 = add(x, attnProj);
+      bProf.resid1 += performance.now() - t0;
+      
+      t0 = performance.now();
       const ln2 = h1.map((row) => layernorm(row, W[`${bp}.ln2.weight`], W[`${bp}.ln2.bias`]).out);
+      bProf.ln2 += performance.now() - t0;
+      
+      t0 = performance.now();
       const ffUp = ln2.map((r) => lin(r, W[`${bp}.ffwd.net.0.weight`], W[`${bp}.ffwd.net.0.bias`]));
       const ffAct = ffUp.map((r) => r.map((v) => Math.max(0, v)));
       const ffDown = ffAct.map((r) => lin(r, W[`${bp}.ffwd.net.2.weight`], W[`${bp}.ffwd.net.2.bias`]));
+      bProf.ffwd += performance.now() - t0;
+      
+      t0 = performance.now();
       const hOut = add(h1, ffDown);
+      bProf.resid2 += performance.now() - t0;
 
+      profile.blocks.push(bProf);
       blocks.push({ ln1, heads, concat, attnProj, h1, ln2, ffUp, ffAct, ffDown, hOut });
       x = hOut;
     }
 
+    t0 = performance.now();
     // output stage
     const znorm = x.map((row) => layernorm(row, W["ln_f.weight"], W["ln_f.bias"]).out);
     const logits = znorm.map((r) => lin(r, W["lm_head.weight"], W["lm_head.bias"]));
     const lastLogits = logits[T - 1].slice();
     const probs = softmax(lastLogits);
     let best = 0; for (let i = 1; i < probs.length; i++) if (probs[i] > probs[best]) best = i;
+    profile.output += performance.now() - t0;
 
-    return { T, tokens, tokEmb, posEmb, h0, blocks, znorm, logits, lastLogits, probs, best };
+    return { T, tokens, tokEmb, posEmb, h0, blocks, znorm, logits, lastLogits, probs, best, profile };
   }
 
   // expose

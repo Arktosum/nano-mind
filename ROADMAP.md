@@ -32,11 +32,21 @@ lesson its real intermediate tensors.
 | 16 | `recap` | whole-architecture diagram | — |
 | 17 | `output` | final LN → logits → softmax → **predicted character** | ✅ |
 | 18 | `generate` | **autoregressive loop** + **argmax/sample/temperature** decoding | ✅ |
+| 19 | `kv_cache` | The KV Cache (Memory bottleneck) | ✅ |
+| 20 | `moe` | Mixture of Experts (Sparsity and Routing) | ✅ |
+| 21 | `flash_attention` | FlashAttention (SRAM vs HBM optimization) | ✅ |
+| 22 | `speculative_decoding` | Speculative Decoding (Draft and Target models) | ✅ |
+| 23 | `gqa` | Grouped-Query Attention (Shared KV heads) | ✅ |
+| 24 | `paged_attention` | PagedAttention (VRAM fragmentation & Block Tables) | ✅ |
+| 25 | `ring_attention` | Ring Attention (Context scaling across GPUs) | ✅ |
+| 26 | `mla` | Multi-Head Latent Attention (DeepSeek's KV Cache compression) | ✅ |
 
 Plus a contextual **minimap** (`web/render/minimap.js`): whole network / parallel head split /
 single-head zoom, shown per lesson.
 
 ### Foundations in place
+- **Vite & ES Modules** — strict, scalable module imports (no global namespace pollution).
+- **Standardized UI System** — over 300 hardcoded SVG colors extracted into CSS variables.
 - `web/forward.js` — one shared, correct forward pass (all 3 blocks + output).
 - `web/render/lesson-kit.js` — shared SVG helpers + palette, so new lessons don't re-declare them.
 - `web/render/tensors.js` — colour maps, heatmaps, bars, hover tooltip.
@@ -45,15 +55,10 @@ single-head zoom, shown per lesson.
 ## Next up
 
 **Short term**
-- [x] ~~**Migrate the attention-chain lessons onto `forward.js`.** LayerNorm, QKV, scores, softmax,
-      values, concat, proj, resid1, ln2 now read `ctx.fwd` instead of recomputing the whole chain
-      (~800 lines of duplicated, fragile math deleted; output verified byte-identical). Remaining:
-      `embedding`/`position` still index the embedding tables directly (trivial, low value), and the
-      per-lesson local `section/note/txt/svg` helpers still shadow `lesson-kit.js` (cosmetic).~~
-- [ ] **Voice pass, finish it.** Lessons 4–15 were toned down from the initial breathless draft;
-      do a final consistency read against the measured voice of lessons 1–2.
-- [x] ~~Move the minimap into a sticky right rail so the "where am I" context stays visible while
-      reading, instead of only at the page bottom.~~
+- [ ] **Curriculum Expansion:** Add lessons for Rotary Positional Embeddings (RoPE), Quantization (GGUF/AWQ), and Low-Rank Adaptation (LoRA).
+- [ ] **Interactive Visuals:** Convert passive SVG animations (MoE, FlashAttention) into interactive sandboxes (e.g. draggable sliders).
+- [ ] **Global Dark Mode:** Add a toggle to switch the entire application into dark mode.
+- [ ] **Voice pass, finish it.** Lessons 4–15 were toned down from the initial breathless draft; do a final consistency read against the measured voice of lessons 1–2.
 
 **Medium term**
 - [x] ~~**Autoregressive generation** — the `generate` lesson: predict-append-repeat, with

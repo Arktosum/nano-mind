@@ -1,6 +1,6 @@
 /* lesson-scores.js — the sixth operation: Attention Scores (Q·K^T), Scaling, and Masking. */
 
-function renderScoresLesson(host, ctx) {
+export function renderScoresLesson(host, ctx) {
   const { chars } = ctx;
   const T = ctx.fwd.T;
   const head0 = ctx.fwd.blocks[0].heads[0];

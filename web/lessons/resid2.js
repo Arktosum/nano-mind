@@ -1,7 +1,7 @@
 /* resid2.js — the second residual add (block 0), on real vectors.
    h'' = h' + f, completing block 0. Reads ctx.fwd. */
 
-function renderResid2Lesson(host, ctx) {
+export function renderResid2Lesson(host, ctx) {
   const b0 = ctx.fwd.blocks[0];
   const T = ctx.fwd.T;
   let active = T - 1;

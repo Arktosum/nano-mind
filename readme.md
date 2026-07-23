@@ -16,12 +16,13 @@ of 64. It's a real trained network, not random weights.
 
 ## Run it
 
-It's static files, but it must be served over HTTP (the app `fetch`es `weights.json`):
+The app uses Vite as a development server to handle ES Modules and Hot-Module Reloading:
 
 ```bash
 cd web
-python -m http.server 8000
-# open http://localhost:8000
+npm install
+npm run dev
+# open http://localhost:5173
 ```
 
 Type a prompt (e.g. `Hi there`), hit **trace**, and use ← / → or the on-screen controls to move
@@ -41,16 +42,17 @@ train/  ──trains a tiny GPT, exports──▶  web/weights.json  ──consu
   char-level dataset from `alice.txt`; `train.py` trains it and exports every weight tensor to
   `../web/weights.json`. You only need this if you want to retrain; the trained weights are already
   committed.
-- **`web/`** — the browser app. Pure vanilla JS, hand-written math, no dependencies. Equations are
+- **`web/`** — the browser app. Built with ES Modules and bundled by Vite. Pure vanilla JS, hand-written math, no heavy dependencies. Equations are
   rendered in plain HTML/CSS (no KaTeX), tensors as inline SVG / canvas.
 
 ### `web/` layout
 
 ```
 web/
+├── package.json          npm dependencies (Vite)
 ├── index.html            app shell: landing + lesson workbench
 ├── style.css             the "engineering instrument plate" visual system
-├── app.js                controller + the lesson registry (chapters)
+├── app.js                controller + entry point (imports all lessons)
 ├── vocab.js              the 75-char vocabulary + tokenizer (encode/decode/glyph)
 ├── forward.js            one correct forward pass, computed once → ctx.fwd
 ├── weights.json          the trained weights (exported from train/)
@@ -81,10 +83,7 @@ are the foundation for re-enabling fine-grained stepping later (see `ROADMAP.md`
 
 ### Adding a lesson
 
-Lessons are registered in `web/app.js` in the `LESSONS` array — each entry has a `crumb`, `title`,
-`short` name, an `eq` (HTML), a `why` (HTML), and a `render(host)` function. Write the render
-function in a new `web/lessons/*.js`, add a `<script>` tag in `index.html`, and push an entry into
-`LESSONS`. Prev/next navigation and the header/equation/why cards are handled for you.
+Lessons are registered in `web/app.js` in the `LESSONS` array. Each lesson is an ES Module that exports a `render(host)` function along with metadata (`crumb`, `title`, `eq`, `why`). Write the render function in a new `web/lessons/*.js`, `import` it in `app.js`, and push an entry into `LESSONS`. Prev/next navigation and the header/equation/why cards are handled for you.
 
 ---
 

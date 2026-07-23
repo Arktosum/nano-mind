@@ -4,7 +4,7 @@
    from the (temperature-scaled) distribution. Sampling is seeded, so a
    given setting reproduces exactly. Reads ctx.weights. */
 
-function renderGenerateLesson(host, ctx) {
+export function renderGenerateLesson(host, ctx) {
   const W = ctx.weights;
   const CTX = 64, MAX = 120, SEED = 1337;
   const promptTokens = ctx.tokens.slice();

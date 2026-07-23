@@ -1,6 +1,6 @@
 /* lesson-resid1.js — the eleventh operation: Residual Add 1. */
 
-function renderResid1Lesson(host, ctx) {
+export function renderResid1Lesson(host, ctx) {
   const { tokens, chars } = ctx;
   const COLS = 64;
   const T = ctx.fwd.T;

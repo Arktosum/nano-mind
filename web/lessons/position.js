@@ -7,7 +7,7 @@
      3. the payoff — a repeated character has identical Eᵗᵒᵏ but different
         Eᵖᵒˢ, so its h⁰ differs by position (order is now encoded). */
 
-function renderPositionSumLesson(host, ctx) {
+export function renderPositionSumLesson(host, ctx) {
   const { tokens, chars, weights } = ctx;
   const Wt = weights["token_embedding_table.weight"]; // 75×64
   const Wp = weights["position_embedding_table.weight"]; // 64×64

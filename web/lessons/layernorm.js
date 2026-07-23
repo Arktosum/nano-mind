@@ -2,7 +2,7 @@
    that prepares the residual stream for the self-attention mechanism.
 */
 
-function renderLayerNormLesson(host, ctx) {
+export function renderLayerNormLesson(host, ctx) {
   const { tokens, chars, weights } = ctx;
   const gamma = weights["blocks.0.ln1.weight"]; // 64
   const beta = weights["blocks.0.ln1.bias"]; // 64

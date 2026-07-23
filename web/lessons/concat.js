@@ -1,6 +1,6 @@
 /* lesson-concat.js — the ninth operation: Concat heads. */
 
-function renderConcatLesson(host, ctx) {
+export function renderConcatLesson(host, ctx) {
   const { tokens, chars } = ctx;
   const COLS = 64, N_HEADS = 4, HEAD_SIZE = 16;
   const T = ctx.fwd.T;

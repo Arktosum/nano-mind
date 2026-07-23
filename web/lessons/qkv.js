@@ -2,7 +2,7 @@
    for the first self-attention head.
 */
 
-function renderQKVLesson(host, ctx) {
+export function renderQKVLesson(host, ctx) {
   const { tokens, chars, weights } = ctx;
   // projection matrices for head 0 (drawn in matrixView); numbers come from ctx.fwd
   const Wq = weights["blocks.0.sa.heads.0.query.weight"];

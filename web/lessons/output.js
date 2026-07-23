@@ -2,7 +2,7 @@
    an actual next-character prediction. This is the payoff the landing
    page promises. Reads ctx.fwd (all 3 blocks already run). */
 
-function renderOutputLesson(host, ctx) {
+export function renderOutputLesson(host, ctx) {
   const F = ctx.fwd;
   const T = F.T;
   const last = T - 1;

@@ -1,7 +1,7 @@
 /* recap.js — a high-level map of the whole architecture, on palette.
    Uses the shared kit helpers (section, note, svg). */
 
-function renderRecapLesson(host, ctx) {
+export function renderRecapLesson(host, ctx) {
   const AC = "#d6401f", INK = "#e8e4da", OFF = "#7d8595", IDLE = "#17170f", LINE = "#5a564b", STROKE = "#3a3a30";
 
   const inner = `

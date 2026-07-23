@@ -2,7 +2,7 @@
    at once, for a chosen query token. Reveals that different heads learn
    to attend to different things. Reads ctx.fwd. */
 
-function renderAttentionAtlasLesson(host, ctx) {
+export function renderAttentionAtlasLesson(host, ctx) {
   const F = ctx.fwd;
   const T = F.T;
   const chars = ctx.chars;

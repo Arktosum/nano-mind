@@ -1,5 +1,5 @@
 /* kv_cache.js — The KV Cache explained */
-function renderKvCacheLesson(host, ctx) {
+export function renderKvCacheLesson(host, ctx) {
   function render() {
     const w = 700;
     const h = 400;

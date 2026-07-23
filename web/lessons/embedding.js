@@ -10,7 +10,7 @@
    Hover anything: read a dimension's exact value, or reveal which character
    any table row belongs to. Click a token (top) or a stacked row to inspect. */
 
-function renderEmbeddingLesson(host, ctx) {
+export function renderEmbeddingLesson(host, ctx) {
   const { tokens, chars, table } = ctx; // table: 75×64
   const ROWS = table.length, COLS = table[0].length;
   const tableMax = maxAbs(table);

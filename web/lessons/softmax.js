@@ -2,7 +2,7 @@
    Masked scores and attention weights come from the shared forward pass
    (ctx.fwd); the arithmetic lives in forward.js. */
 
-function renderSoftmaxLesson(host, ctx) {
+export function renderSoftmaxLesson(host, ctx) {
   const { chars } = ctx;
   const T = ctx.fwd.T;
   const head0 = ctx.fwd.blocks[0].heads[0];
