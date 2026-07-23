@@ -109,7 +109,8 @@ const LESSONS = [
       "<p>Now that every token has broadcasted its <b>Query</b> and its <b>Key</b>, we can calculate how much they align. We do this by taking the dot product of every Query with every Key, forming a T×T matrix.</p>" +
       "<p>But there's a mathematical trap here! If we assume the elements of the Query and Key vectors have a mean of 0 and a variance of 1, their dot product (which sums across all 16 dimensions) will have a mean of 0 but a <b>variance of 16</b>. As we add more dimensions, the variance of the dot product grows, meaning the scores get more and more extreme.</p>" +
       "<p>If we feed these huge raw numbers into the Softmax function later, it will push the function into its flat, saturated regions—giving a probability of almost 1.0 to the highest score and 0 to everything else. This completely kills the gradients during training! To pull the variance back down to a healthy 1, we <b>scale</b> the scores by dividing by the square root of the dimensions (√16 = 4).</p>" +
-      "<p>Finally, we apply a <b>causal mask</b>. Since this model generates text autoregressively (one character at a time, left-to-right), token 3 is forbidden from attending to token 4, because token 4 hasn't been generated yet during inference! We enforce this rule by setting all upper-triangular scores (where j > i) to −∞</p>",
+      "<p>Finally, we apply a <b>causal mask</b>. Since this model generates text autoregressively (one character at a time, left-to-right), token 3 is forbidden from attending to token 4, because token 4 hasn't been generated yet during inference! We enforce this rule by setting all upper-triangular scores (where j > i) to −∞</p>" +
+      "<p style='margin-top: 20px; font-size: 12px; color: #888; border-top: 1px solid #333; padding-top: 10px;'><b>References:</b><br>The Scaled Dot-Product Attention mechanism and the Transformer architecture itself were famously introduced in <i>\"Attention Is All You Need\"</i> by Vaswani et al. (2017). <a href='https://arxiv.org/abs/1706.03762' target='_blank' style='color: #4dabf7; text-decoration: none;'>[arXiv:1706.03762]</a></p>",
     render: (host) => renderScoresLesson(host, ctx),
   },
   {
@@ -198,6 +199,26 @@ const LESSONS = [
     render: (host) => renderResid2Lesson(host, ctx),
   },
   {
+    crumb: "blocks 0–2 / stacking — the stream deepens",
+    title: "Stacking blocks",
+    short: "blocks",
+    eq: `<div class="eq">h<sup>ℓ+1</sup> = Block<sub>ℓ</sub>(h<sup>ℓ</sup>) ,&nbsp;&nbsp; ℓ = 0, 1, 2</div>`,
+    why:
+      "<p>We walked through <b>one</b> block in full. This model stacks <b>3 identical blocks</b> — same structure, different learned weights. Each reads the residual stream, computes a correction, and adds it back.</p>" +
+      "<p>Below, watch one token's vector deepen block by block, and see how its attention shifts with depth. After the third block, the stream is ready for the output stage.</p>",
+    render: (host) => renderBlocksLesson(host, ctx),
+  },
+  {
+    crumb: "attention atlas / all 12 heads at once",
+    title: "The attention atlas",
+    short: "atlas",
+    eq: `<div class="eq">A<sub>ℓ,h</sub> = softmax( mask( Q<sub>ℓ,h</sub> K<sub>ℓ,h</sub><sup>T</sup> / √d<sub>k</sub> ) ) &nbsp; for all ℓ, h</div>`,
+    why:
+      "<p>Every lesson so far zoomed in on <b>head 0 of block 0</b>. But the model has <b>12 heads</b> — 4 in each of the 3 layers — all attending in parallel, each with its own learned weights.</p>" +
+      "<p>Pick a query token and see all 12 attention patterns at once. This is where the model's division of labour shows up: heads specialise, and depth changes what they look at.</p>",
+    render: (host) => renderAttentionAtlasLesson(host, ctx),
+  },
+  {
     crumb: "block 0 / architecture recap",
     title: "The Big Picture",
     short: "recap",
@@ -229,6 +250,40 @@ const LESSONS = [
       "<p>Everything you just walked through happens on every single step. Below, drive the loop yourself and watch the model compose text — conditioned, each step, on the characters it already wrote.</p>",
     render: (host) => renderGenerateLesson(host, ctx),
   },
+  {
+    crumb: "advanced / memory — the kv cache",
+    title: "The KV Cache",
+    short: "kv_cache",
+    eq: `<div class="eq">Don't recompute the past. Save it in RAM.</div>`,
+    why:
+      "<p>In the previous <b>generate</b> step, you saw that predicting one new character requires running a forward pass over the <i>entire</i> sequence. If you have generated 1,000 tokens, generating the 1,001st token means recomputing attention for all 1,000 tokens again. This is <i>O(N<sup>2</sup>)</i> and incredibly slow.</p>" +
+      "<p>The solution is the <b>Key-Value (KV) Cache</b>. Once a token is processed, its Key and Value matrices are saved in GPU RAM. For the next token, the model only computes the Q, K, and V for that <i>single</i> new token, and reads the past K and V from RAM! This makes generation blazingly fast (<i>O(N)</i>).</p>" +
+      "<p>The catch? Memory. Storing the KV cache for a 1-million-token context on a modern model can consume tens of gigabytes per user, rapidly maxing out the GPU's memory limit.</p>",
+    render: (host) => renderKvCacheLesson(host, ctx),
+  },
+  {
+    id: "mla",
+    crumb: "advanced / memory — multi-head latent attention",
+    title: "Multi-Head Latent Attention",
+    short: "mla",
+    eq: `<div class="eq">Compress the KV Cache.</div>`,
+    why:
+      "<p>The traditional KV cache scales linearly with the number of attention heads, layers, and context length. For modern LLMs with massive context windows, this memory footprint becomes the primary bottleneck.</p>" +
+      "<p><b>Multi-Head Latent Attention (MLA)</b>, pioneered by DeepSeek, solves this by projecting the Key and Value matrices into a single, low-dimensional latent space before storing them in RAM. When attention is calculated, it dynamically unzips (up-projects) the latent vector back into the multiple heads.</p>" +
+      "<p>This trades a tiny bit of extra compute (the up/down projections) for an absolutely massive reduction in memory footprint (often >90% smaller!), allowing frontier models to serve massive contexts cheaply.</p>",
+    render: (host) => renderMlaLesson(host, ctx),
+  },
+  {
+    crumb: "advanced / context parallelism — ring attention",
+    title: "Scaling to 1M Tokens: Ring Attention",
+    short: "ring_attention",
+    eq: `<div class="eq">Pass KV blocks while computing: hide the network latency</div>`,
+    why:
+      "<p>Standard attention scales quadratically (<i>O(N<sup>2</sup>)</i>), meaning 1 million tokens requires 250× the computation of 4,000 tokens! Even worse, it requires holding the entire Key-Value (KV) Cache in GPU memory.</p>" +
+      "<p>To process massive contexts, modern models split the sequence across multiple GPUs using <b>Context Parallelism</b> (e.g. Ring Attention). Each GPU holds a small chunk of Queries (Q), Keys (K), and Values (V).</p>" +
+      "<p>The GPU computes attention for its local chunk, then passes its KV blocks to its neighbour while receiving new KV blocks from the other side. By overlapping this communication with the computation, the model hides the network latency and scales near-infinitely!</p>",
+    render: (host) => renderRingAttentionLesson(host, ctx),
+  },
 ];
 
 /* ── boot ─────────────────────────────────────────────────── */
@@ -250,10 +305,39 @@ fetch("weights.json")
     dom.boot.classList.add("error");
   });
 
-/* ── landing → lesson ─────────────────────────────────────── */
-dom.promptForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const text = dom.promptInput.value.trim();
+/* ── home page: curriculum + entry ────────────────────────── */
+const PHASES = [
+  { label: "Embedding", steps: [0, 1] },
+  { label: "Self-attention", steps: [2, 3, 4, 5, 6, 7, 8, 9] },
+  { label: "Feed-forward", steps: [10, 11, 12] },
+  { label: "Depth & heads", steps: [13, 14] },
+  { label: "Whole picture", steps: [15] },
+  { label: "Prediction", steps: [16] },
+  { label: "Generation", steps: [17] },
+  { label: "Advanced", steps: [18, 19, 20] },
+];
+
+function buildJourney() {
+  const host = el("journey");
+  if (!host) return;
+  host.innerHTML = PHASES.map((ph) =>
+    `<div class="jphase"><div class="jphase-lab">${ph.label}</div><div class="jsteps">` +
+    ph.steps.map((i) =>
+      `<button class="jstep" data-i="${i}"><span class="jnum">${String(i + 1).padStart(2, "0")}</span>` +
+      `<span class="jtitle">${LESSONS[i].title}</span></button>`
+    ).join("") + "</div></div>"
+  ).join("");
+  host.querySelectorAll(".jstep").forEach((b) =>
+    b.addEventListener("click", () => startAt(dom.promptInput.value.trim() || "Alice was beginning to", +b.dataset.i))
+  );
+}
+buildJourney();
+
+document.querySelectorAll(".ex").forEach((b) =>
+  b.addEventListener("click", () => startAt(b.dataset.ex, 0))
+);
+
+function startAt(text, lessonIdx) {
   if (!weights || !text) return;
   dom.landing.hidden = true;
   dom.workbench.hidden = false;
@@ -261,7 +345,14 @@ dom.promptForm.addEventListener("submit", (e) => {
   dom.body.dataset.view = "lesson";
   dom.wbPrompt.value = text;
   buildCtx(text);
+  idx = Math.max(0, Math.min(LESSONS.length - 1, lessonIdx || 0));
   showLesson();
+  window.scrollTo(0, 0);
+}
+
+dom.promptForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  startAt(dom.promptInput.value.trim(), 0);
 });
 
 dom.wbRun.addEventListener("click", () => {

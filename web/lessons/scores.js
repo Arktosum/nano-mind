@@ -1,87 +1,12 @@
 /* lesson-scores.js — the sixth operation: Attention Scores (Q·K^T), Scaling, and Masking. */
 
 function renderScoresLesson(host, ctx) {
-  const { tokens, chars, weights } = ctx;
-  const Wt = weights["token_embedding_table.weight"];
-  const Wp = weights["position_embedding_table.weight"];
-  const ln1_g = weights["blocks.0.ln1.weight"];
-  const ln1_b = weights["blocks.0.ln1.bias"];
-  
-  const Wq = weights["blocks.0.sa.heads.0.query.weight"]; 
-  const Wk = weights["blocks.0.sa.heads.0.key.weight"];
-
-  const COLS = Wt[0].length; // 64
-  const HEAD_SIZE = Wq.length; // 16
-  const T = tokens.length;
-  const EPS = 1e-5;
-
-  // Calculate H0
-  const Etok = (i) => Wt[tokens[i]];
-  const Epos = (i) => Wp[i];
-  const H0 = (i) => Etok(i).map((v, d) => v + Epos(i)[d]);
-
-  // Calculate LN
-  function calcLN(i) {
-    const h = H0(i);
-    let sum = 0;
-    for (let c = 0; c < COLS; c++) sum += h[c];
-    const mean = sum / COLS;
-
-    let varSum = 0;
-    for (let c = 0; c < COLS; c++) {
-      const diff = h[c] - mean;
-      varSum += diff * diff;
-    }
-    const variance = varSum / COLS;
-    const std = Math.sqrt(variance + EPS);
-    return h.map(v => (v - mean) / std).map((v, c) => ln1_g[c] * v + ln1_b[c]);
-  }
-
-  // Precompute Q and K for all tokens in the sequence
-  const Q = [];
-  const K = [];
-  for (let i = 0; i < T; i++) {
-    const h_tilde = calcLN(i);
-    const q = [];
-    const k = [];
-    for (let row = 0; row < HEAD_SIZE; row++) {
-      let q_sum = 0, k_sum = 0;
-      for (let col = 0; col < COLS; col++) {
-        q_sum += h_tilde[col] * Wq[row][col];
-        k_sum += h_tilde[col] * Wk[row][col];
-      }
-      q.push(q_sum);
-      k.push(k_sum);
-    }
-    Q.push(q);
-    K.push(k);
-  }
-
-  // Compute Scores S = Q * K^T
-  const S_raw = [];
-  const S_scaled = [];
-  const S_masked = [];
-  for (let i = 0; i < T; i++) {
-    const rawRow = [];
-    const scaledRow = [];
-    const maskedRow = [];
-    for (let j = 0; j < T; j++) {
-      let dot = 0;
-      for (let d = 0; d < HEAD_SIZE; d++) {
-        dot += Q[i][d] * K[j][d];
-      }
-      rawRow.push(dot);
-      
-      const scaled = dot / Math.sqrt(HEAD_SIZE);
-      scaledRow.push(scaled);
-      
-      const masked = j > i ? -Infinity : scaled;
-      maskedRow.push(masked);
-    }
-    S_raw.push(rawRow);
-    S_scaled.push(scaledRow);
-    S_masked.push(maskedRow);
-  }
+  const { chars } = ctx;
+  const T = ctx.fwd.T;
+  const head0 = ctx.fwd.blocks[0].heads[0];
+  const S_raw = head0.scoresRaw;       // T×T raw dot products Q·Kᵀ
+  const S_scaled = head0.scoresScaled; // ÷ √d_k
+  const S_masked = head0.scoresMasked; // upper triangle = -Infinity
 
   // Setup UI
   host.addEventListener("mousemove", (e) => {

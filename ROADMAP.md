@@ -27,9 +27,11 @@ lesson its real intermediate tensors.
 | 11 | `ln2` | LayerNorm 2 | ✅ |
 | 12 | `ffwd` | feed-forward 64→256→ReLU→64, with dead-neuron sparsity | ✅ |
 | 13 | `resid2` | residual add (FFN) → end of block 0 | ✅ |
-| 14 | `recap` | whole-architecture diagram | — |
-| 15 | `output` | final LN → logits → softmax → **predicted character** | ✅ |
-| 16 | `generate` | **autoregressive loop** — predict, append, repeat; writes text | ✅ |
+| 14 | `blocks` | **stacking** — the stream deepening across all 3 blocks; attention by depth | ✅ |
+| 15 | `attention` | **atlas** — all 12 heads (3 layers × 4) attending at once, per query token | ✅ |
+| 16 | `recap` | whole-architecture diagram | — |
+| 17 | `output` | final LN → logits → softmax → **predicted character** | ✅ |
+| 18 | `generate` | **autoregressive loop** + **argmax/sample/temperature** decoding | ✅ |
 
 Plus a contextual **minimap** (`web/render/minimap.js`): whole network / parallel head split /
 single-head zoom, shown per lesson.
@@ -43,20 +45,23 @@ single-head zoom, shown per lesson.
 ## Next up
 
 **Short term**
-- [ ] **Migrate lessons 1–11 onto `forward.js` + `lesson-kit.js`.** They still recompute their own
-      intermediates and re-declare local helpers. Now that `ctx.fwd` exists and is validated, delete
-      the per-lesson math and local `section/note/txt/svg`. Biggest remaining code cleanup.
+- [x] ~~**Migrate the attention-chain lessons onto `forward.js`.** LayerNorm, QKV, scores, softmax,
+      values, concat, proj, resid1, ln2 now read `ctx.fwd` instead of recomputing the whole chain
+      (~800 lines of duplicated, fragile math deleted; output verified byte-identical). Remaining:
+      `embedding`/`position` still index the embedding tables directly (trivial, low value), and the
+      per-lesson local `section/note/txt/svg` helpers still shadow `lesson-kit.js` (cosmetic).~~
 - [ ] **Voice pass, finish it.** Lessons 4–15 were toned down from the initial breathless draft;
       do a final consistency read against the measured voice of lessons 1–2.
-- [ ] Move the minimap from the page bottom to a sticky rail (or up under the equation) so the
-      "where am I" context is visible while reading, not only after scrolling.
+- [x] ~~Move the minimap into a sticky right rail so the "where am I" context stays visible while
+      reading, instead of only at the page bottom.~~
 
 **Medium term**
-- [x] ~~**Autoregressive generation** — the `generate` lesson: drive the predict-append-repeat loop,
-      watch it write, with per-character confidence and greedy-loop detection.~~
-- [ ] **Temperature / sampling** on top of `generate` — argmax ↔ sample, seeded, to break the loops.
-- [ ] **Blocks 1 & 2:** a short "same structure, new weights — here's what changes" lesson rather
-      than 13 more identical screens.
+- [x] ~~**Autoregressive generation** — the `generate` lesson: predict-append-repeat, with
+      per-character confidence and greedy-loop detection.~~
+- [x] ~~**Temperature / sampling** — argmax↔sample toggle + temperature slider (seeded), with the
+      next-char distribution reshaping live as you drag T.~~
+- [x] ~~**Blocks 1 & 2** — the `blocks` lesson: the residual stream deepening across all 3 blocks
+      and how attention shifts with depth.~~
 - [ ] **Temperature / sampling** controls on the output distribution (argmax ↔ sample, seeded).
 - [ ] A per-lesson **"show the exact tensor"** drawer (the parked `player/tensors.js` heatmaps) for
       readers who do want every number.
@@ -64,7 +69,8 @@ single-head zoom, shown per lesson.
 **Longer term / parked**
 - [ ] Re-enable the **fine-grained micro-step player** (`web/player/*`, fully working, ~117 atomic
       steps for a single forward pass) as an optional "expert mode" alongside lesson mode.
-- [ ] Attention-pattern explorer: pick a token, watch what every head attends to across layers.
+- [x] ~~Attention-pattern explorer — the `attention` atlas: pick a query token, see all 12 heads
+      (3 layers × 4) attend at once.~~
 - [ ] Retrain hooks: a bigger context / cleaner corpus without changing the visualizer.
 
 ## Known issues / debt

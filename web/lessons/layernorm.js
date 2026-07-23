@@ -4,17 +4,13 @@
 
 function renderLayerNormLesson(host, ctx) {
   const { tokens, chars, weights } = ctx;
-  const Wt = weights["token_embedding_table.weight"]; // 75×64
-  const Wp = weights["position_embedding_table.weight"]; // 64×64
   const gamma = weights["blocks.0.ln1.weight"]; // 64
   const beta = weights["blocks.0.ln1.bias"]; // 64
-  const COLS = Wt[0].length; // 64
-  const T = tokens.length;
+  const COLS = 64;
+  const T = ctx.fwd.T;
   const EPS = 1e-5;
 
-  const Etok = (i) => Wt[tokens[i]];
-  const Epos = (i) => Wp[i];
-  const H0 = (i) => Etok(i).map((v, d) => v + Epos(i)[d]);
+  const H0 = (i) => ctx.fwd.h0[i]; // initial residual stream (from forward.js)
 
   // LayerNorm calculation for a given position
   function calcLN(i) {

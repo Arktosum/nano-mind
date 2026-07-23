@@ -4,64 +4,19 @@
 
 function renderQKVLesson(host, ctx) {
   const { tokens, chars, weights } = ctx;
-  const Wt = weights["token_embedding_table.weight"]; // 75×64
-  const Wp = weights["position_embedding_table.weight"]; // 64×64
-  const ln1_g = weights["blocks.0.ln1.weight"]; // 64
-  const ln1_b = weights["blocks.0.ln1.bias"]; // 64
-  
-  // Projection matrices for head 0 (16x64)
-  const Wq = weights["blocks.0.sa.heads.0.query.weight"]; 
+  // projection matrices for head 0 (drawn in matrixView); numbers come from ctx.fwd
+  const Wq = weights["blocks.0.sa.heads.0.query.weight"];
   const Wk = weights["blocks.0.sa.heads.0.key.weight"];
   const Wv = weights["blocks.0.sa.heads.0.value.weight"];
 
-  const COLS = Wt[0].length; // 64
-  const HEAD_SIZE = Wq.length; // 16
-  const T = tokens.length;
-  const EPS = 1e-5;
+  const COLS = 64, HEAD_SIZE = 16;
+  const T = ctx.fwd.T;
+  const b0 = ctx.fwd.blocks[0];
+  const head0 = b0.heads[0];
 
-  const Etok = (i) => Wt[tokens[i]];
-  const Epos = (i) => Wp[i];
-  const H0 = (i) => Etok(i).map((v, d) => v + Epos(i)[d]);
-
-  // Recalculate LayerNorm
-  function calcLN(i) {
-    const h = H0(i);
-    let sum = 0;
-    for (let c = 0; c < COLS; c++) sum += h[c];
-    const mean = sum / COLS;
-
-    let varSum = 0;
-    for (let c = 0; c < COLS; c++) {
-      const diff = h[c] - mean;
-      varSum += diff * diff;
-    }
-    const variance = varSum / COLS;
-    const std = Math.sqrt(variance + EPS);
-
-    const norm = h.map(v => (v - mean) / std);
-    const out = norm.map((v, c) => ln1_g[c] * v + ln1_b[c]);
-
-    return out;
-  }
-
-  // Calculate Q, K, V
+  // read the projected vectors from the shared forward pass
   function calcQKV(i) {
-    const h_tilde = calcLN(i);
-    const q = [];
-    const k = [];
-    const v = [];
-    for (let row = 0; row < HEAD_SIZE; row++) {
-      let q_sum = 0, k_sum = 0, v_sum = 0;
-      for (let col = 0; col < COLS; col++) {
-        q_sum += h_tilde[col] * Wq[row][col];
-        k_sum += h_tilde[col] * Wk[row][col];
-        v_sum += h_tilde[col] * Wv[row][col];
-      }
-      q.push(q_sum);
-      k.push(k_sum);
-      v.push(v_sum);
-    }
-    return { h_tilde, q, k, v };
+    return { h_tilde: b0.ln1[i], q: head0.Q[i], k: head0.K[i], v: head0.V[i] };
   }
 
   let active = T - 1;

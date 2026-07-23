@@ -7,62 +7,74 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body data-mode="landing">
-    <!-- ───────────────────────── LANDING PLATE ───────────────────────── -->
-    <main class="plate" id="landing">
-      <span class="crop tl"></span><span class="crop tr"></span>
-      <span class="crop bl"></span><span class="crop br"></span>
-
-      <header class="plate-head">
-        <span class="plate-mark">nano<span class="dot">·</span>mind</span>
-        <span class="plate-spec">char-level · d=64 · heads=4 · layers=3 · ctx=64</span>
+    <!-- ───────────────────────── HOME ───────────────────────── -->
+    <main class="home" id="landing">
+      <header class="home-bar">
+        <span class="home-mark">nano<span class="dot">·</span>mind</span>
+        <span class="home-tag">an interactive decoder-only transformer</span>
       </header>
 
-      <div class="plate-body">
-        <p class="fig-no">fig. 0 — the forward pass</p>
-        <h1 class="lede">
-          Type a fragment. Watch the network turn it into the next
-          character&nbsp;— every matmul, mask, and softmax, down to the numbers.
+      <section class="home-hero">
+        <h1 class="home-lede">
+          See exactly how a language model turns text into the
+          <span class="hl">next character</span>.
         </h1>
+        <p class="home-desc">
+          A real, tiny GPT — trained on <i>Alice in Wonderland</i> — walked through
+          one operation at a time. Every equation, every number, on the actual
+          weights. No hand-waving, no server, no build step.
+        </p>
 
-        <!-- schematic of the pipeline -->
-        <div class="schematic" aria-hidden="true">
-          <span class="s-node">embed</span>
-          <span class="s-wire"></span>
-          <span class="s-node">block 0</span>
-          <span class="s-wire"></span>
-          <span class="s-node">block 1</span>
-          <span class="s-wire"></span>
-          <span class="s-node">block 2</span>
-          <span class="s-wire"></span>
-          <span class="s-node">ln<sub>f</sub></span>
-          <span class="s-wire"></span>
-          <span class="s-node live">logits</span>
+        <form class="home-input" id="promptForm" autocomplete="off">
+          <input
+            type="text"
+            id="promptInput"
+            placeholder="Type a fragment of text…"
+            spellcheck="false"
+            disabled
+          />
+          <button type="submit" id="runBtn" disabled>trace <span>▸</span></button>
+        </form>
+
+        <div class="home-examples">
+          <span class="ex-lead">or try</span>
+          <button class="ex" data-ex="Alice was beginning to">Alice was beginning to</button>
+          <button class="ex" data-ex="The Queen said">The Queen said</button>
+          <button class="ex" data-ex="Hi there">Hi there</button>
         </div>
-      </div>
+        <p class="boot-status" id="bootStatus">loading weights…</p>
+      </section>
 
-      <form class="input-bay" id="promptForm" autocomplete="off">
-        <label class="bay-label" for="promptInput">input</label>
-        <input
-          type="text"
-          id="promptInput"
-          class="bay-field"
-          placeholder="Alice was beginning to"
-          spellcheck="false"
-          disabled
-        />
-        <button type="submit" id="runBtn" class="bay-run" disabled>trace ▸</button>
-      </form>
+      <section class="home-journey">
+        <div class="home-h2"><span>the walkthrough</span><em>16 steps · click any to jump in</em></div>
+        <div class="journey" id="journey"><!-- built from the lesson registry --></div>
+      </section>
 
-      <footer class="plate-foot">
-        <span class="boot-status" id="bootStatus">loading weights…</span>
-        <span class="foot-note">trained on alice.txt · 147,988 chars · runs entirely in your browser</span>
+      <section class="home-model">
+        <div class="home-h2"><span>the model</span></div>
+        <dl class="model-spec">
+          <div><dt>75</dt><dd>char vocab</dd></div>
+          <div><dt>64</dt><dd>dimensions</dd></div>
+          <div><dt>4</dt><dd>heads</dd></div>
+          <div><dt>3</dt><dd>layers</dd></div>
+          <div><dt>64</dt><dd>context</dd></div>
+          <div><dt>~0.2M</dt><dd>parameters</dd></div>
+        </dl>
+        <p class="model-note">
+          Character-level tokenizer · learned positional embeddings · pre-norm ·
+          ReLU feed-forward. Deliberately small so <b>every number fits on screen</b>.
+        </p>
+      </section>
+
+      <footer class="home-foot">
+        trained on alice.txt · 147,988 characters · runs entirely in your browser
       </footer>
     </main>
 
     <!-- ───────────────────────── WORKBENCH ───────────────────────── -->
     <div class="workbench" id="workbench" hidden>
       <header class="wb-bar">
-        <span class="wb-mark">nano<span class="dot">·</span>mind</span>
+        <span class="wb-mark" style="cursor:pointer;" onclick="location.reload()" title="Back to home">nano<span class="dot">·</span>mind</span>
         <div class="wb-prompt">
           <label class="bay-label" for="wbPrompt">input</label>
           <input type="text" id="wbPrompt" class="wb-prompt-field" spellcheck="false" />
@@ -103,12 +115,15 @@
             <span class="why-label">why</span>
             <p id="whyText">Press <b>trace</b> to run the forward pass.</p>
           </div>
-          
-          <!-- Minimap embedded neatly in the flow -->
-          <div id="minimapCard" style="margin: 40px auto; display: none; flex-wrap: wrap; justify-content: center; gap: 20px;"></div>
 
           <nav class="lesson-foot" id="lessonFoot"></nav>
         </section>
+
+        <!-- sticky "you are here" rail -->
+        <aside class="mm-rail">
+          <div class="mm-rail-hint">you are here</div>
+          <div id="minimapCard"></div>
+        </aside>
       </div>
 
       <footer class="spine" id="spine">
@@ -138,9 +153,14 @@
     <script src="lessons/ln2.js"></script>
     <script src="lessons/ffwd.js"></script>
     <script src="lessons/resid2.js"></script>
+    <script src="lessons/blocks.js"></script>
+    <script src="lessons/attention.js"></script>
     <script src="lessons/recap.js"></script>
     <script src="lessons/output.js"></script>
     <script src="lessons/generate.js"></script>
+    <script src="lessons/kv_cache.js"></script>
+    <script src="lessons/mla.js"></script>
+    <script src="lessons/ring_attention.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
